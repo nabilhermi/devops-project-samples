@@ -96,7 +96,7 @@ pipeline {
                 script {
                     def targetVersion = getEnvVersion("dev")
                     sshagent(credentials: ['ansible-node-manager']) {
-                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.yml -l testserver deploy_playbook.yml -e \"docker_image_tag=${targetVersion}\"'"
+                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.ini -l testserver deploy_playbook.yml -e \"docker_image_tag=${targetVersion}\"'"
                     }
                 }
             }
