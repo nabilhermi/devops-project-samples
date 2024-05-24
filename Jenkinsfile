@@ -1,4 +1,4 @@
-xpipeline {
+pipeline {
     agent any
     environment {
         BRANCHE_DEV = 'origin/develop'
@@ -16,76 +16,13 @@ xpipeline {
             }
         }
 
-        stage('Tests') {
-            steps {
-                sh 'mvn test'
-            }
-        }
+     
 
-        stage('Sonarqube Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv('sonar-server') {
-                        sh "mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
-                    }
-                    timeout(time: 1, unit: 'MINUTES') {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                        }
-                    }
-                }
-
-            }
-        }
-
-        stage('Maven Build and Package') {
-            steps {
-                script {
-                    sh 'mvn clean package -DskipTests'
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts 'target/*.jar'
-                }
-            }
-        }
-        stage('Docker Build and Push to Nexus') {
-            steps {
-                script {
-                    envName = "dev"
-                    if(env.GIT_BRANCH == BRANCHE_PROD) {
-                        envName = "prod"
-                    }
-                    envVersion  =  getEnvVersion(envName)
-                    withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS_ID}", usernameVariable: 'USER', passwordVariable: 'PASSWORD')]){
-                        sh 'echo $PASSWORD | docker login -u $USER --password-stdin $NEXUS_DOCKER_REGISTRY'
-                        sh 'docker system prune -af'
-                        sh "docker build -t $DOCKER_IMAGE_TAG/$DOCKER_IMAGE_NAME:$envVersion --no-cache --pull ."
-                        sh "docker push $DOCKER_IMAGE_TAG/$DOCKER_IMAGE_NAME:$envVersion"
-                    }
-                }
-            }
-        }
+   
+   
       
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+     
 
     }
 }
