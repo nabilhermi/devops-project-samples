@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class DevopsProjectSamplesApplicationTests {
 
-	@Test
+	@Test(expected = Test.None.class /* no exception expected */)
 	void contextLoads() {
 	}
 
