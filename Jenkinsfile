@@ -5,36 +5,6 @@ pipeline {
         BRANCHE_PROD = 'origin/main'
         NEXUS_DOCKER_REGISTRY = "http://prod.local:5003"
         NEXUS_CREDENTIALS_ID = "nexus-credentials"
-
-        DOCKER_IMAGE_NAME = "api-demo"
-        DOCKER_IMAGE_TAG = "prod.local:5003"
-    }
-
-    stages {
-      stage('Checkout') {
-        steps {
-          checkout scm
-          echo 'Pulling... ' + env.GIT_BRANCH
-        }
-
-      }
-
-      stage('Tests') {
-        steps {
-          sh 'mvn test'
-        }
-      }
-
-
-    stage('Sonarqube Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv('sonar-server') {
-                        sh "mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
-                    }
-                    timeout(time: 1, unit: 'MINUTES') {
-                        def qg = waitForQualityGate()
-
         DOCKER_IMAGE_NAME = "devops-project-samples"
         DOCKER_IMAGE_TAG = "prod.local:5003"
     }
@@ -63,19 +33,11 @@ pipeline {
                         echo "Waiting for SonarQube quality gate..."
                         def qg = waitForQualityGate()
                         echo "Quality gate status: ${qg.status}"
-
                         if (qg.status != 'OK') {
                             error "Pipeline aborted due to quality gate failure: ${qg.status}"
                         }
                     }
                 }
-
-
-            }
-    }
-
-  
-
             }
         }
 
@@ -99,12 +61,6 @@ pipeline {
 
 
 
-
-
-
-
-
-    }
 
 
 
@@ -140,7 +96,7 @@ pipeline {
                 script {
                     def targetVersion = getEnvVersion("dev")
                     sshagent(credentials: ['ansible-node-manager']) {
-                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.yml -l testserver deploy_playbook.yml -e \"docker_image_tag=${targetVersion}\"'"
+                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.ini -l testserver deploy_playbook.yml -e \"docker_image_tag=${targetVersion}\"'"
                     }
                 }
             }
@@ -154,17 +110,10 @@ pipeline {
 
 
 
-}
-
-
-
-
-
 
      
     }
 }
-
 def getEnvVersion(envName) {
     def pom = readMavenPom file: 'pom.xml'
     // get the current development version
