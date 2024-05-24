@@ -1,4 +1,4 @@
-pipeline {
+xpipeline {
     agent any
     environment {
         BRANCHE_DEV = 'origin/develop'
@@ -70,37 +70,23 @@ pipeline {
         }
       
 
-        stage('Ansible job staging') {
-            when {
-                expression { env.GIT_BRANCH == BRANCHE_DEV }
-            }
-            steps {
-                script {
-                    def targetVersion = getEnvVersion("dev")
-                    sshagent(credentials: ['ansible-node-manager']) {
-                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.yml -l testserver deploy_playbook.yml -e \"docker_image_tag=${targetVersion}\"'"
-                    }
-                }
-            }
-        }
 
-        stage('Ansible job production') {
-            when {
-                expression { env.GIT_BRANCH == BRANCHE_PROD }
-            }
-            steps {
-                script {
-                    def targetVersion = getEnvVersion("prod")
-                    sshagent(credentials: ['github-credentials']) {
-                        sh "git tag -f v${targetVersion}"
-                        sh "git push origin --tags HEAD:develop"
-                    }
-                    sshagent(credentials: ['ansible-node-manager']) {
-                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.ini -l prodserver deploy_playbook.yml --vault-password-file ~/.passvault.txt -e \"docker_image_tag=${targetVersion}\"'"
-                    }
-                }
-            }
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }
 def getEnvVersion(envName) {
