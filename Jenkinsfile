@@ -5,7 +5,7 @@ pipeline {
         BRANCHE_PROD = 'origin/main'
         NEXUS_DOCKER_REGISTRY = "http://prod.local:5003"
         NEXUS_CREDENTIALS_ID = "nexus-credentials"
-<<<<<<< HEAD
+
         DOCKER_IMAGE_NAME = "api-demo"
         DOCKER_IMAGE_TAG = "prod.local:5003"
     }
@@ -34,7 +34,7 @@ pipeline {
                     }
                     timeout(time: 1, unit: 'MINUTES') {
                         def qg = waitForQualityGate()
-=======
+
         DOCKER_IMAGE_NAME = "devops-project-samples"
         DOCKER_IMAGE_TAG = "prod.local:5003"
     }
@@ -63,19 +63,19 @@ pipeline {
                         echo "Waiting for SonarQube quality gate..."
                         def qg = waitForQualityGate()
                         echo "Quality gate status: ${qg.status}"
->>>>>>> main
+
                         if (qg.status != 'OK') {
                             error "Pipeline aborted due to quality gate failure: ${qg.status}"
                         }
                     }
                 }
-<<<<<<< HEAD
+
 
             }
     }
 
   
-=======
+
             }
         }
 
@@ -98,16 +98,16 @@ pipeline {
         }
 
 
->>>>>>> main
 
 
 
 
-<<<<<<< HEAD
+
+
     }
 
 
-=======
+
 
         stage('Docker Build and Push to Nexus') {
             steps {
@@ -146,25 +146,25 @@ pipeline {
             }
         }
 
->>>>>>> main
 
 
 
 
 
 
-<<<<<<< HEAD
+
+
 }
 
 
-=======
+
 
 
 
      
     }
 }
->>>>>>> main
+
 def getEnvVersion(envName) {
     def pom = readMavenPom file: 'pom.xml'
     // get the current development version
