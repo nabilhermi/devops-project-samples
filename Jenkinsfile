@@ -21,22 +21,22 @@ pipeline {
                 sh 'mvn test'
             }
         }
-
-         stage('Sonarqube Analysis') {
+        
+        
+        stage('Sonarqube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('sonar-server') {
-                        sh "mvn sonar:sonar -Dsonar.projectKey=devops-project-samples -Dsonar.host.url=http://192.168.83.137:9000 -Dsonar.token=sqa_c8c31468f74ece241bfb3f3089e70a738cdcea83"
+                        sh "mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
                     }
-                    timeout(time: 10, unit: 'MINUTES') {
-                        echo "Waiting for SonarQube quality gate..."
+                    timeout(time: 1, unit: 'MINUTES') {
                         def qg = waitForQualityGate()
-                        echo "Quality gate status: ${qg.status}"
                         if (qg.status != 'OK') {
                             error "Pipeline aborted due to quality gate failure: ${qg.status}"
                         }
                     }
                 }
+
             }
         }
 
