@@ -65,6 +65,40 @@ pipeline {
 
 
 
+        stage('Docker Build and Push to Nexus') {
+            steps {
+                script {
+                    envName = "dev"
+                    if(env.GIT_BRANCH == BRANCHE_PROD) {
+                        envName = "prod"
+                    }
+                    envVersion  =  getEnvVersion(envName)
+                    withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS_ID}", usernameVariable: 'USER', passwordVariable: 'PASSWORD')]){
+                        sh 'echo $PASSWORD | docker login -u $USER --password-stdin $NEXUS_DOCKER_REGISTRY'
+                        sh 'docker system prune -af'
+                        sh "docker build -t $DOCKER_IMAGE_TAG/$DOCKER_IMAGE_NAME:$envVersion --no-cache --pull ."
+                        sh "docker push $DOCKER_IMAGE_TAG/$DOCKER_IMAGE_NAME:$envVersion"
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
      
     }
 }
