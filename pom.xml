@@ -18,7 +18,7 @@
         <!-- Configuration de SonarQube -->
         <sonar.projectKey>com.example:devops-project-samples</sonar.projectKey>
         <sonar.host.url>http://prod.local:9000</sonar.host.url>
-        <sonar.login>sqa_c8c31468f74ece241bfb3f3089e70a738cdcea83</sonar.login>
+        <sonar.token>sqa_c8c31468f74ece241bfb3f3089e70a738cdcea83</sonar.token>
     </properties>
     <dependencies>
         <dependency>
