@@ -21,42 +21,86 @@ pipeline {
                 sh 'mvn test'
             }
         }
-        
-        
-         stage('Sonarqube Analysis') {
+
+        stage('Sonarqube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('sonar-server') {
-                        sh "mvn sonar:sonar -Dsonar.projectKey=devops-project-samples -Dsonar.host.url=http://192.168.83.137:9000 -Dsonar.token=sqa_c8c31468f74ece241bfb3f3089e70a738cdcea83"
+                        sh "mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
                     }
-                    timeout(time: 10, unit: 'MINUTES') {
-                        echo "Waiting for SonarQube quality gate..."
+                    timeout(time: 1, unit: 'MINUTES') {
                         def qg = waitForQualityGate()
-                        echo "Quality gate status: ${qg.status}"
                         if (qg.status != 'OK') {
                             error "Pipeline aborted due to quality gate failure: ${qg.status}"
                         }
                     }
                 }
+
             }
         }
 
+        stage('Maven Build and Package') {
+            steps {
+                script {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts 'target/*.jar'
+                }
+            }
+        }
+        stage('Docker Build and Push to Nexus') {
+            steps {
+                script {
+                    envName = "dev"
+                    if(env.GIT_BRANCH == BRANCHE_PROD) {
+                        envName = "prod"
+                    }
+                    envVersion  =  getEnvVersion(envName)
+                    withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS_ID}", usernameVariable: 'USER', passwordVariable: 'PASSWORD')]){
+                        sh 'echo $PASSWORD | docker login -u $USER --password-stdin $NEXUS_DOCKER_REGISTRY'
+                        sh 'docker system prune -af'
+                        sh "docker build -t $DOCKER_IMAGE_TAG/$DOCKER_IMAGE_NAME:$envVersion --no-cache --pull ."
+                        sh "docker push $DOCKER_IMAGE_TAG/$DOCKER_IMAGE_NAME:$envVersion"
+                    }
+                }
+            }
+        }
+      
 
+        stage('Ansible job staging') {
+            when {
+                expression { env.GIT_BRANCH == BRANCHE_DEV }
+            }
+            steps {
+                script {
+                    def targetVersion = getEnvVersion("dev")
+                    sshagent(credentials: ['ansible-node-manager']) {
+                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.yml -l testserver deploy_playbook.yml -e \"docker_image_tag=${targetVersion}\"'"
+                    }
+                }
+            }
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-     
+        stage('Ansible job production') {
+            when {
+                expression { env.GIT_BRANCH == BRANCHE_PROD }
+            }
+            steps {
+                script {
+                    def targetVersion = getEnvVersion("prod")
+                    sshagent(credentials: ['github-credentials']) {
+                        sh "git tag -f v${targetVersion}"
+                        sh "git push origin --tags HEAD:develop"
+                    }
+                    sshagent(credentials: ['ansible-node-manager']) {
+                        sh "ssh ansible@192.168.83.173 'cd ansible-projects/devops-ansible-deployment && ansible-playbook -i 00_inventory.ini -l prodserver deploy_playbook.yml --vault-password-file ~/.passvault.txt -e \"docker_image_tag=${targetVersion}\"'"
+                    }
+                }
+            }
+        }
     }
 }
 def getEnvVersion(envName) {
